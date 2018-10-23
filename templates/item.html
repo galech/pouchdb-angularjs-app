@@ -1,16 +1,63 @@
-<form>
+<form ng-if="inputForm">
     <div class="form-group">
-        <label for="firstname">First Name</label>
-        <input type="text" class="form-control" id="firstname" placeholder="First Name" ng-model="inputForm.firstname">
+        <label for="firstname">Nombre</label>
+        <input type="text" class="form-control" ng-model="inputForm.name"/>
     </div>
+	
     <div class="form-group">
-        <label for="lastname">Last Name</label>
-        <input type="text" class="form-control" id="lastname" placeholder="Last Name" ng-model="inputForm.lastname">
+        <label for="firstname">Fecha</label>
+		<input class="form-control" type="date" ng-model="inputForm.date" placeholder="Seleccione una fecha" required />
     </div>
+	
     <div class="form-group">
-        <label for="email">Email</label>
-        <input type="email" class="form-control" id="email" placeholder="Email" ng-model="inputForm.email">
+        <label for="firstname">Personas</label>
+        <input type="number" class="form-control" ng-model="inputForm.people"/>
     </div>
-    <button type="button" class="btn btn-danger" ui-sref="main.list">Cancel</button>
-    <button type="button" class="btn btn-success" ng-click="save(inputForm.firstname, inputForm.lastname, inputForm.email)">Save</button>
+	
+    <div class="form-group">
+        <label for="firstname">Monitores</label>
+        <input type="number" class="form-control" ng-model="inputForm.received_by"/>
+    </div>
+	
+    <div class="form-group">
+        <label for="firstname">Tiempo</label>
+		<div uib-timepicker ng-model="inputForm.time" ng-change="changed()" hour-step="1" minute-step="5" show-meridian="ismeridian"></div>
+    </div>
+	
+    <div class="form-group">
+        <label for="firstname">Diamantes</label>
+		<input type="number" class="form-control" ng-model="inputForm.diamonds"/>
+    </div>
+	
+    <div class="form-group">
+        <label for="firstname">Pistas</label>
+        <input type="number" class="form-control" ng-model="inputForm.tracks"/>
+    </div>
+	
+    <div class="form-group">
+        <label for="firstname">Escapan</label>
+        <input type="checkbox" class="form-control" ng-model="inputForm.scaped"/> 
+    </div>
+	
+    <div ng-if="inputForm.scaped" class="form-group">
+        <label for="firstname">Vivos</label>
+        <input type="checkbox" class="form-control" ng-model="inputForm.scaped_alived"/> 
+    </div>
+	
+    <div class="form-group">
+        <label for="firstname">Puntos</label>
+		<input type="number" class="form-control" ng-model="inputForm.score"/>
+    </div>
+	
+
+	
+	
+
+    <!-- <div class="form-group"> -->
+        <!-- <label for="email">Email</label> -->
+        <!-- <input type="email" class="form-control" id="email" placeholder="Email" ng-model="inputForm.email"> -->
+    <!-- </div> -->
+    <button type="button" class="btn btn-danger" ui-sref="main.list">Anular</button>
+    <button type="button" class="btn btn-success" ng-click="save(inputForm)">Guardar</button>
+    <button type="button" class="btn btn-success" ng-click="genScore(inputForm)">Generar puntuacion</button>
 </form>

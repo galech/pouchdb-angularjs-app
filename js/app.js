@@ -1,4 +1,4 @@
-angular.module("pouchapp", ["ui.router"])
+angular.module("pouchapp", ["ui.router", "ui.bootstrap"])
 
 .run(function($pouchDB) {
     $pouchDB.setDatabase("groups");
@@ -19,21 +19,22 @@ angular.module("pouchapp", ["ui.router"])
             "controller": "ListController"
         })
         .state("main.item", {
-            "url": "/item/:documentId/:documentRevision",
+            "url": "/item/:documentId?/:documentRevision?",
             "templateUrl": "templates/item.html",
-            "controller": "DetailController"
+            "controller": "DetailController",
+			"params": { documentId: null, documentRevision: null },
         });
     $urlRouterProvider.otherwise("main/list");
 })
 
 
-.controller("BaseController", function($scope, $rootScope, $state, $stateParams, $pouchDB) {
+.controller("BaseController", function($scope, $rootScope, $filter, $state, $stateParams, $pouchDB) {
 
     $scope.items = {};
 	$scope.filteredGroups = []
     $pouchDB.startListening();
-	$scope.baseFilters = {};
-	$scope.orderByOptions = ["name"];
+	$scope.baseFilters = {'search_text': "",};
+	$scope.orderByOptions = ["position", "name"];
 	
 
     // Listen for changes which include create or update events
@@ -52,51 +53,57 @@ angular.module("pouchapp", ["ui.router"])
 	
 	$scope.filterItems = function() {
 		
-		$scope.filteredGroups = []
-		// has_search_text = search_text? and search_text.length > 0
-		// if has_search_text
-		// searchVal = search_text.replace(/([()[{*+.$^\\|?])/g, '\\$1')
-		// regex = new RegExp('' + searchVal, 'i')
+		var groupList = []
 
-		// has_medicalunit_filters = medicalunit_filter? and medicalunit_filter.length > 0
-		// has_sector_filters = sector_active_filters? and sector_active_filters.length > 0
-		// has_entity_filters = entity_active_filters? and entity_active_filters.length > 0
-
-		// check_start_date = moment(start_date)
-		// check_end_date = moment(end_date)
-
-		
 		
 		_.forOwn($scope.items, function(doc, doc_id) {
-			
-			// if has_search_text
-			  // if !(regex.test(stay.patient.name) || regex.test(stay.si_id) || regex.test(stay.patient.ipp))
-				// continue
-			// if has_sector_filters and sector_active_filters.indexOf(stay.patient.sector) == -1
-			  // continue
-			// if has_entity_filters and entity_active_filters.indexOf(stay.patient.entity) == -1
-			  // continue
-			// if has_medicalunit_filters and medicalunit_filter.indexOf(stay.medical_unit) == -1
-			  // continue
-
-			// if mode == "entries"
-			  // if stay.d_from and not (moment(stay.d_from) > check_start_date and moment(stay.d_from) < check_end_date)
-				// continue
-			// else #mode == "exits"
-			  // if not (stay.projected_end_date or stay.d_to)
-				// continue
-			  // #projected_end_date
-			  // else if stay.d_to and not (moment(stay.d_to) > check_start_date and moment(stay.d_to) < check_end_date)
-				// continue
-
-			$scope.filteredGroups.push(doc)
-
-
-			
-
-		} );
-
+			groupList.push(doc)
+	
+		});
 		
+		groupList = $filter('orderBy')(groupList, ["-score", "time"])
+		
+		var score = false
+		var position_relative = 0
+		var position_global = 0
+		var index = 0
+		_.map(groupList, function(group) {
+			
+			if (group.score){
+				index += 1
+				if (score != group.score){
+					position_relative = index;	
+					score = group.score;
+				}
+				
+				position_global +=1 
+				
+				
+				
+				group.position = position_relative
+				group.position_global = position_global
+				if (group.position_global < 4){
+					
+					
+				}
+				
+				
+			}
+			
+		});
+		
+		groupList = $filter('orderBy')(groupList, $scope.orderByOptions)
+		
+		if ($scope.baseFilters.search_text.length > 0){
+			searchVal = $scope.baseFilters.search_text.replace(/([()[{*+.$^\\|?])/g, '\\$1')
+			regex = new RegExp('' + searchVal, 'i')
+			groupList = _.filter(groupList, function(group) {
+				return regex.test(group.name) || (group.date && regex.test($filter('date')(group.date, "dd/MM/yyyy")))
+			});
+		
+		}
+
+		$scope.filteredGroups = groupList
 		
 	}
 	
@@ -121,23 +128,64 @@ angular.module("pouchapp", ["ui.router"])
     if($stateParams.documentId) {
         $pouchDB.get($stateParams.documentId).then(function(result) {
             $scope.inputForm = result;
+			$scope.inputForm.date = new Date(result.date)
+			$scope.$apply();
         });
     }
+	else{
+		var d = new Date();
+		d.setHours( 0 );
+		d.setMinutes( 0 );
+		$scope.inputForm = {
+			"date":new Date(),
+			"time": d
+			
+			
+		};
+		
+	}
+	
+	
+	$scope.genScore = function(inputForm) {
+		
+		
+		base_score = 30 + ((inputForm.diamonds || 0)*5) - ((inputForm.tracks || 0)*5)
+		if (inputForm.scaped){
+			base_score += 20
+			if (inputForm.scaped_alived){
+				base_score += 20
+			}
+		}
+		
+		if (inputForm.time){
+			var d = new Date(inputForm.time)
+			minutes = d.getHours()*60 + d.getMinutes()
+			penalties = Math.max(0, minutes-60)
+			
+			base_score -= penalties
+			
+			extra = Math.floor(Math.max(0, 60-minutes) / 10.0)
+			
+			base_score += extra
+			
+
+			
+		}
+		
+		inputForm.score = base_score
+		
+	}
 
     // Save a document with either an update or insert
-    $scope.save = function(firstname, lastname, email) {
-        var jsonDocument = {
-            "firstname": firstname,
-            "lastname": lastname,
-            "email": email
-        };
+    $scope.save = function(inputForm) {
+        var jsonDocument = inputForm
         // If we're updating, provide the most recent revision and document id
         if($stateParams.documentId) {
             jsonDocument["_id"] = $stateParams.documentId;
             jsonDocument["_rev"] = $stateParams.documentRevision;
         }
         $pouchDB.save(jsonDocument).then(function(response) {
-            $state.go("list");
+            $state.go("main.list");
         }, function(error) {
             console.log("ERROR -> " + error);
         });

@@ -1,22 +1,43 @@
-<button class="btn btn-primary" ui-sref="main.item">New Item</button>
+<input type='text' placeholder='Busqueda'
+        ng-model='baseFilters.search_text'
+        ng-model-options='{ debounce: 400 }'
+        ng-change='filterItems()'
+    ></input> 
+<button class="btn btn-primary" ui-sref="main.item">Nuevo grupo</button>
 <br />
 <table class="table table-striped">
     <thead>
         <tr>
-            <th>First Name</th>
-            <th>Last Name</th>
-            <th>Email</th>
+            <th>Ranking</th>
+            <th>Nombre</th>
+            <th>Puntiacion</th>
             <th></th>
         </tr>
     </thead>
     <tbody>
         <tr ng-repeat="group in filteredGroups">
-            <td>{{group.text}}</td>
-            <td>{{group.lastname}}</td>
-            <td>{{group.email}}</td>
-			{{group._id}}
-			{{group._rev}}
-            <td><a href="" ui-sref="main.item({documentId: group._id, documentRevision: group._rev})">edit</a> | <a href="" ng-click="delete(group._id, group._rev)">delete</a></td>
+			<td>
+				{{group.position}}
+				<i ng-if="group.position_global < 4" class="fa fa-trophy"></i>
+			</td>
+			
+			<td>
+			
+				{{group.date | date: "dd/MM/yyyy"}}
+			</td>
+			
+            <td>
+				{{group.name}}
+			</td>
+			<td>
+				{{group.score}}
+			</td>
+
+            <!-- <td>{{group.lastname}}</td> -->
+            <!-- <td>{{group.email}}</td> -->
+			<!-- {{group._id}} -->
+			<!-- {{group._rev}} -->
+            <td><a href="" ui-sref="main.item({documentId: group._id, documentRevision: group._rev})">edit</a></td>
         </tr>
     </tbody>
 </table>
