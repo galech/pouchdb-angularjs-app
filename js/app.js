@@ -1,4 +1,4 @@
-angular.module("pouchapp", ["ui.router", "ui.bootstrap"])
+angular.module("pouchapp", ["camera", "ui.router", "ui.bootstrap", "infinite-scroll", ])
 
 .run(function($pouchDB) {
     $pouchDB.setDatabase("groups");
@@ -32,13 +32,16 @@ angular.module("pouchapp", ["ui.router", "ui.bootstrap"])
 
     $scope.items = {};
 	$scope.filteredGroups = []
+	$scope.limitInterval = 25;
     $pouchDB.startListening();
 	$scope.baseFilters = {'search_text': "",};
 	$scope.orderByOptions = ["position", "name"];
 	
 
+	
     // Listen for changes which include create or update events
     $rootScope.$on("$pouchDB:changes", function(event, datas) {
+		
 		_.map(datas, function(data) {$scope.items[data.doc._id] = data.doc;})
 		$scope.filterItems();
         $scope.$apply();
@@ -52,7 +55,7 @@ angular.module("pouchapp", ["ui.router", "ui.bootstrap"])
     });
 	
 	$scope.filterItems = function() {
-		
+		console.log("filter items")
 		var groupList = []
 
 		
@@ -105,6 +108,8 @@ angular.module("pouchapp", ["ui.router", "ui.bootstrap"])
 
 		$scope.filteredGroups = groupList
 		
+		$scope.limitedGroups = $filter('limitTo')($scope.filteredGroups, $scope.limitInterval) 
+		
 	}
 	
 	
@@ -113,36 +118,70 @@ angular.module("pouchapp", ["ui.router", "ui.bootstrap"])
 })
 
 
-.controller("ListController", function($scope, $rootScope, $state, $stateParams, $pouchDB) {
+.controller("ListController", function($scope, $rootScope, $state, $filter, $stateParams, $pouchDB) {
 
 
     $scope.delete = function(id, rev) {
         $pouchDB.delete(id, rev);
+    }
+	
+	
+	$scope.getGroupImage = function(group) {
+        if ( group._attachments){
+			if (group._attachments["caca.jpeg"]){
+				return "data:image/jpeg;base64,"+group._attachments["caca.jpeg"].data
+			}	
+		}
+    }
+
+	
+	
+	$scope.addMoreItems = function(filteredGroups, limitedGroups, limitInterval) {
+		_.map($filter('limitTo')(filteredGroups, limitInterval, limitedGroups.length), function(group) {
+			limitedGroups.push(group)
+			
+		});
     }
 
 })
 
 .controller("DetailController", function($scope, $rootScope, $state, $stateParams, $pouchDB) {
 
+
+	var d = new Date();
+	d.setHours( 0 );
+	d.setMinutes( 0 );
+	$scope.minTime = d;
+	
+	var d2 = new Date();
+	d2.setHours( 3 );
+	d2.setMinutes( 0 );
+	$scope.maxTime = d2;
+	
     // Look up a document if we landed in the info screen for editing a document
     if($stateParams.documentId) {
         $pouchDB.get($stateParams.documentId).then(function(result) {
             $scope.inputForm = result;
 			$scope.inputForm.date = new Date(result.date)
+			if (!$scope.inputForm.time){
+				var d = new Date();
+				d.setHours( 4 );
+				d.setMinutes( 0 );
+				$scope.inputForm.time = d;
+				
+			}
 			$scope.$apply();
         });
     }
 	else{
 		var d = new Date();
-		d.setHours( 0 );
+		d.setHours( 1 );
 		d.setMinutes( 0 );
 		$scope.inputForm = {
 			"date":new Date(),
 			"time": d
-			
-			
+
 		};
-		
 	}
 	
 	
@@ -176,6 +215,22 @@ angular.module("pouchapp", ["ui.router", "ui.bootstrap"])
 		
 	}
 
+	$scope.savePhoto = function(inputForm, picture) {
+		if (!inputForm._attachments){
+			inputForm._attachments = {}
+			
+		}
+		// picture = picture.replace(/^(data:image\/jpeg;base64,\.)/,"");
+		picture = picture.replace("data:image/jpeg;base64,","");
+		console.log(picture)
+		inputForm._attachments["photo.jpeg"] = {
+			content_type:'image/jpeg',
+			data:picture
+		}
+    }
+	
+		
+	
     // Save a document with either an update or insert
     $scope.save = function(inputForm) {
         var jsonDocument = inputForm
@@ -207,6 +262,7 @@ angular.module("pouchapp", ["ui.router", "ui.bootstrap"])
         changeListener = database.changes({
             live: true,
 			include_docs: true,
+			attachments: true,
 			since: 'now'
 		}).on("change", function(change) {
             if(!change.deleted) {
@@ -216,7 +272,7 @@ angular.module("pouchapp", ["ui.router", "ui.bootstrap"])
             }
         });
 		
-		database.allDocs({include_docs: true}).then(function (result) {
+		database.allDocs({include_docs: true, attachments: true}).then(function (result) {
 			$rootScope.$broadcast("$pouchDB:changes", result.rows);
 
 		})		

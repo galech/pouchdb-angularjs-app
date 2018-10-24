@@ -1,0 +1,22 @@
+.time-picker{
+	display: inline-block;
+	vertical-align: middle;
+}
+
+input.ng-invalid {
+  box-shadow: 1px 1px 8px red;
+  border: none;
+}
+input.ng-invalid:active {
+  box-shadow: 1px 1px 8px red;
+  border: none;
+}
+
+input.ng-invalid:focus {
+  box-shadow: 1px 1px 8px red;
+  border: none;
+}
+
+.edit-group-form .row {
+  padding: 15px 15px;
+}
