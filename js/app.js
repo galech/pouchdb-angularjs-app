@@ -3,7 +3,7 @@ angular.module("pouchapp", ["camera", "ui.router", "ui.bootstrap", "infinite-scr
 .run(function($pouchDB) {
     $pouchDB.setDatabase("groups");
     // $pouchDB.sync("http://localhost:4984/test-database");
-	$pouchDB.sync("http://localhost:5984/groupsss");
+	$pouchDB.sync("http://localhost:5984/groups");
 })
 
 .config(function($stateProvider, $urlRouterProvider) {
@@ -41,7 +41,7 @@ angular.module("pouchapp", ["camera", "ui.router", "ui.bootstrap", "infinite-scr
 	
     // Listen for changes which include create or update events
     $rootScope.$on("$pouchDB:changes", function(event, datas) {
-		
+		console.log(datas)
 		_.map(datas, function(data) {$scope.items[data.doc._id] = data.doc;})
 		$scope.filterItems();
         $scope.$apply();
@@ -55,7 +55,7 @@ angular.module("pouchapp", ["camera", "ui.router", "ui.bootstrap", "infinite-scr
     });
 	
 	$scope.filterItems = function() {
-		console.log("filter items")
+		console.log("filterItems")
 		var groupList = []
 
 		
@@ -107,7 +107,6 @@ angular.module("pouchapp", ["camera", "ui.router", "ui.bootstrap", "infinite-scr
 		}
 
 		$scope.filteredGroups = groupList
-		
 		$scope.limitedGroups = $filter('limitTo')($scope.filteredGroups, $scope.limitInterval) 
 		
 	}
@@ -125,11 +124,19 @@ angular.module("pouchapp", ["camera", "ui.router", "ui.bootstrap", "infinite-scr
         $pouchDB.delete(id, rev);
     }
 	
-	
+
 	$scope.getGroupImage = function(group) {
-        if ( group._attachments){
-			if (group._attachments["caca.jpeg"]){
-				return "data:image/jpeg;base64,"+group._attachments["caca.jpeg"].data
+        if ( !group.src && group._attachments){
+			if (group._attachments["photo.jpeg"]){
+				console.log("dentro")
+				$pouchDB.getAttachment(group._id, 'photo.jpeg').then(function (blob) {
+					  var url = URL.createObjectURL(blob);
+					  console.log("mas dentro", blob, url, group._attachments["photo.jpeg"])
+					  group.src = url;
+					  $scope.$apply();
+				})
+				
+				// return "data:image/jpeg;base64,"+group._attachments["photo.jpeg"].data
 			}	
 		}
     }
@@ -137,6 +144,7 @@ angular.module("pouchapp", ["camera", "ui.router", "ui.bootstrap", "infinite-scr
 	
 	
 	$scope.addMoreItems = function(filteredGroups, limitedGroups, limitInterval) {
+		console.log("addMoreItems")
 		_.map($filter('limitTo')(filteredGroups, limitInterval, limitedGroups.length), function(group) {
 			limitedGroups.push(group)
 			
@@ -222,7 +230,6 @@ angular.module("pouchapp", ["camera", "ui.router", "ui.bootstrap", "infinite-scr
 		}
 		// picture = picture.replace(/^(data:image\/jpeg;base64,\.)/,"");
 		picture = picture.replace("data:image/jpeg;base64,","");
-		console.log(picture)
 		inputForm._attachments["photo.jpeg"] = {
 			content_type:'image/jpeg',
 			data:picture
@@ -262,7 +269,6 @@ angular.module("pouchapp", ["camera", "ui.router", "ui.bootstrap", "infinite-scr
         changeListener = database.changes({
             live: true,
 			include_docs: true,
-			attachments: true,
 			since: 'now'
 		}).on("change", function(change) {
             if(!change.deleted) {
@@ -272,7 +278,7 @@ angular.module("pouchapp", ["camera", "ui.router", "ui.bootstrap", "infinite-scr
             }
         });
 		
-		database.allDocs({include_docs: true, attachments: true}).then(function (result) {
+		database.allDocs({include_docs: true}).then(function (result) {
 			$rootScope.$broadcast("$pouchDB:changes", result.rows);
 
 		})		
@@ -308,11 +314,20 @@ angular.module("pouchapp", ["camera", "ui.router", "ui.bootstrap", "infinite-scr
     this.delete = function(documentId, documentRevision) {
         return database.remove(documentId, documentRevision);
     }
+	
+	
+	this.put = function(put_dict) {
+        return database.put(put_dict);
+    }
 
     this.get = function(documentId) {
         return database.get(documentId);
     }
 
+	this.getAttachment = function(documentId, attachement) {
+        return database.getAttachment(documentId, attachement);
+    }
+	
     this.destroy = function() {
         database.destroy();
     }

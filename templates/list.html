@@ -36,7 +36,7 @@
 			
 			<td>
 			
-				<img src="{{::getGroupImage(group)}}"/>
+				<img ng-init="getGroupImage(group)" src="{{group.src}}"/>
 			
 			</td>
 
@@ -44,7 +44,7 @@
             <!-- <td>{{group.email}}</td> -->
 			<!-- {{group._id}} -->
 			<!-- {{group._rev}} -->
-            <td><a href="" ui-sref="main.item({documentId: group._id, documentRevision: group._rev})">edit</a></td>
+            <td><a href="" ui-sref="main.item({ documentId: group._id, documentRevision: group._rev})">edit</a></td>
         </tr>
     </tbody>
 </table>
