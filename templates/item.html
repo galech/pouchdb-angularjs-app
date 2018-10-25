@@ -4,41 +4,16 @@
 
 
 	<div class="row">
-		<button type="button" class="btn btn-success" ng-click="takePhoto = true">Foto</button>
+		<button type="button" class="btn btn-success" ng-click="takePhoto(inputForm)">Foto</button>
 		<button ng-disabled="groupForm.$invalid" type="button" class="pull-right btn btn-success" ng-click="save(inputForm)">Guardar</button>
 		<button type="button" class="pull-right btn btn-danger" ui-sref="main.list">Anular</button>
 	</div>
 	
 	
 	
-	<div ng-init="picture = false" ng-if="takePhoto">
-        <ng-camera
-            capture-message="Cheeeese!"
-            output-height="160"
-            output-width="213"
-            viewer-height="320"
-            viewer-width="426"
-            image-format="jpeg"
-            jpeg-quality="100"
-            action-message="Take picture"
-            snapshot="picture"
-            flash-fallback-url="/vendors/webcamjs/webcam.swf"
-            overlay-url="/overlay.png"
-            shutter-url="/shutter.mp3"
-            ></ng-camera>
-            <!-- for cropping:
-                crop-height="90"
-                crop-width="120"
-            -->
 
-			
-		<div ng-if="picture" >
-			<img ng-src="{{picture}}" alt="webcam picture">
-			<button type="button" class="btn btn-success" ng-click="savePhoto(inputForm, picture)">Guardar</button>
-		</div>
-	</div>
 	
-	<div ng-if="!takePhoto">
+	<div>
 		<div class="row">
 			<span class="form-inline">
 				<div class="form-group">

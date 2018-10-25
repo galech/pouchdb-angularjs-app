@@ -1,4 +1,4 @@
-angular.module("pouchapp", ["camera", "ui.router", "ui.bootstrap", "infinite-scroll", ])
+angular.module("pouchapp", ["ui.router", "ui.bootstrap", "infinite-scroll", ])
 
 .run(function($pouchDB) {
     $pouchDB.setDatabase("groups");
@@ -153,7 +153,7 @@ angular.module("pouchapp", ["camera", "ui.router", "ui.bootstrap", "infinite-scr
 
 })
 
-.controller("DetailController", function($scope, $rootScope, $state, $stateParams, $pouchDB) {
+.controller("DetailController", function($scope, $rootScope, $state, $stateParams, $uibModal, $pouchDB) {
 
 
 	var d = new Date();
@@ -222,6 +222,27 @@ angular.module("pouchapp", ["camera", "ui.router", "ui.bootstrap", "infinite-scr
 		inputForm.score = base_score
 		
 	}
+	
+	
+	
+	$scope.takePhoto = function(inputForm) {
+		
+
+		var dialogOpts = {
+			backdrop: true,
+			keyboard: true,
+			templateUrl: 'templates/take-photo.html',
+			controller: 'TakePhotoCtrl',
+		};
+
+		
+		$uibModal.open(dialogOpts).result.then(function (photo) {
+			console.log(photo)
+			// $ctrl.selected = selectedItem;
+		});
+		
+
+    }
 
 	$scope.savePhoto = function(inputForm, picture) {
 		if (!inputForm._attachments){
@@ -253,6 +274,82 @@ angular.module("pouchapp", ["camera", "ui.router", "ui.bootstrap", "infinite-scr
         });
     }
 
+})
+
+.controller("TakePhotoCtrl", function($scope, $uibModalInstance) {
+	
+	$scope.pictures = []
+	$scope.acceptPhoto = function(photo) {
+		console.log(photo)
+		$uibModalInstance.close(photo);
+	}; 
+	$scope.cancel = function() {
+		$uibModalInstance.dismiss();
+	};
+})
+
+.directive('ngCamera', function($q, $timeout) {
+	
+	
+	return {
+		'restrict': 'E',
+		'scope': {
+			'flashFallbackUrl': '@',
+			'overlayUrl': '@',
+			'shutterUrl': '@',
+			'pictures': '='
+		},
+		'template': '<div style="width: 500px;height: 500px;" ng-click="libraryLoaded && cameraLive && getSnapshot()" id="ng-camera-feed"></div>',
+		'link': link
+	};
+
+        function link(scope, element, attrs) {
+            /**
+             * Set default variables
+             */
+            scope.libraryLoaded = false;
+            scope.cameraLive = false;
+
+            Webcam.set({
+                image_format: "jpeg",
+                jpeg_quality: 100,
+                force_flash: false
+            });
+            if(scope.flashFallbackUrl !== 'undefined') {
+                Webcam.setSWFLocation(scope.flashFallbackUrl);
+            }
+			
+			$timeout(function() {
+				Webcam.attach('#ng-camera-feed');
+			}, 300);
+
+
+            Webcam.on('load', function() {
+                scope.$apply(function() {
+                    scope.libraryLoaded = true;
+                });
+            });
+            Webcam.on('live', function() {
+                scope.$apply(function() {
+                    scope.cameraLive = true;
+                });
+            });
+            Webcam.on('error', function(error) {
+                console.error('WebcameJS directive ERROR: ', error);
+            });
+
+            scope.getSnapshot = function() {
+				Webcam.snap(function(data_uri) {
+					console.log(data_uri)
+					scope.pictures.push(data_uri);
+				});
+
+            };
+
+            scope.$on('$destroy', function() {
+                Webcam.reset();
+            });
+        }
 })
 
 .service("$pouchDB", ["$rootScope", "$q", function($rootScope, $q) {
@@ -333,3 +430,5 @@ angular.module("pouchapp", ["camera", "ui.router", "ui.bootstrap", "infinite-scr
     }
 
 }]);
+
+

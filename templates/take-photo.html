@@ -1,0 +1,17 @@
+<div class="modal-body">	
+        <ng-camera
+            pictures="pictures"
+            flash-fallback-url="/vendors/webcamjs/webcam.swf"
+            overlay-url="/overlay.png"
+            shutter-url="/shutter.mp3"
+            ></ng-camera>
+
+			
+		<div ng-repeat="picture in pictures">
+			<img ng-src="{{picture}}" alt="webcam picture">
+		</div>
+</div>
+<div class="modal-footer">
+    <button ng-disabled="pictures.length == 0" class="btn btn-primary" ng-click="acceptPhoto()">Confirmer</button>
+    <button class="btn" ng-click="cancel()">Annuler</button>
+</div>
