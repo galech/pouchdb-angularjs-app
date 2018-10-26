@@ -22,18 +22,15 @@ input.ng-invalid:focus {
 }
 
 input[type="number"].form-control{
-  width: 4.5em;
+  width: 5em;
 }
 
 
-.form-group:first-child label {
-	width: 100px;
-	text-align: right;
-}
+/* .form-group:first-child label { */
+	/* width: 100px; */
+	/* text-align: right; */
+/* } */
 
-.gen-score{
-	margin-left: 15px;
-}
 
 .photo-dialog-body{
 	width:100%;
@@ -60,9 +57,9 @@ input[type="number"].form-control{
 	background-color: #2693ff !important;
 }
 
-.row :nth-child(even){
-  background-color: #dcdcdc;
-}
-.row :nth-child(odd){
-  background-color: #aaaaaa;
+.take-photo-btn{
+
+		margin-top:100px;
+		font-size:25px;
+	
 }

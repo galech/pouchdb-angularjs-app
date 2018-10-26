@@ -4,8 +4,8 @@
 
 
 	<div class="row">
-		<button ng-disabled="groupForm.$invalid" type="button" class="pull-right btn btn-success" ng-click="save(inputForm)">Guardar</button>
-		<button type="button" class="pull-right btn btn-danger" ui-sref="main.list">Anular</button>
+		<button style="margin-left: 20px;" ng-disabled="groupForm.$invalid" type="button" class="pull-right btn btn-primary active" ng-click="save(inputForm)">Guardar</button>
+		<button type="button" class="pull-right btn btn-danger active" ui-sref="main.list">Anular</button>
 	</div>
 	
 	
@@ -79,7 +79,18 @@
 				<span class="form-inline">				
 					<div class="form-group">
 						<label>Puntos</label>
-						<input type="number" class="form-control" ng-model="inputForm.score"/><button type="button" class="btn btn-success gen-score" ng-click="genScore(inputForm)">Generar puntuacion</button>
+						<input type="number" class="form-control" ng-model="inputForm.score"/>
+						
+						
+						
+					</div>
+				</span>
+			</div>
+			
+			<div class="row">
+				<span class="form-inline">				
+					<div class="form-group">
+						<button type="button" class="btn btn-success" ng-click="genScore(inputForm)">Generar puntuacion</button>	
 					</div>
 				</span>
 			</div>
@@ -90,7 +101,9 @@
 			<div ng-if="!currentPhoto" class="row text-center">
 				<span class="form-inline">
 					<div class="form-group">
-						<button type="button" class="btn btn-success" ng-click="takePhoto(inputForm)">Foto</button>
+						<a ng-click="takePhoto(inputForm)" href="#" class="take-photo-btn btn btn-default">
+							<span class="glyphicon glyphicon-camera"></span>
+						</a>
 					</div>	
 				</span>
 			</div>
