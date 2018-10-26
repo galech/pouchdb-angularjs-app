@@ -14,79 +14,23 @@
 	
 	<div class="row">
 		<div class="col-sm-8">
-			<div class="row">
+		
+			<div class="row" ng-repeat="formLine in villaAmparo">
 				<span class="form-inline">
-					<div class="form-group">
-						<label>Nombre</label>
-						<input required type="text" class="form-control" ng-model="inputForm.name"/>
+					<div class="form-group" ng-repeat="field in formLine">
+						<label>{{field.label}}</label>
+						<span ng-switch="field.type">
+							<input ng-switch-when="text" ng-model="inputForm[field.key]" ng-required="field.required" type="text" class="form-control"></input>
+							<input ng-switch-when="date" ng-model="inputForm[field.key]" ng-required="field.required" type="date"></input>
+							<input ng-switch-when="number" ng-model="inputForm[field.key]" ng-min="field.min" ng-required="field.required" class="form-control" type="number"></input>
+							<input ng-switch-when="boolean" ng-model="inputForm[field.key]" ng-required="field.required"  type="checkbox"></input>
+							<div ng-switch-when="duration" uib-timepicker ng-model="inputForm[field.key]" hour-step="1" minute-step="5" ng-required="field.required"  min="field.min" max="field.max" class=" time-picker" show-meridian="false"></div>
+						</span>
+
 					</div>	
-					<div class="form-group">
-						<label>Fecha</label>
-						<input class="form-control" type="date" ng-model="inputForm.date" placeholder="Seleccione una fecha"/>
-					</div>
-				</span>
-			</div>
-			<div class="row">
-				<span class="form-inline">
-					<div class="form-group">
-						<label>Personas</label>
-						<input type="number" class="form-control" ng-model="inputForm.people"/>
-					</div>
-					<div class="form-group">
-						<label>Monitores</label>
-						<input type="number" class="form-control" ng-model="inputForm.received_by"/>
-					</div>
-					
 				</span>
 			</div>
 
-			
-			<div class="row">
-				<span class="form-inline">
-					<div class="form-group">
-						<label>Diamantes</label>
-						<input type="number" class="form-control" ng-model="inputForm.diamonds"/>
-					</div>
-					
-					<div class="form-group">
-						<label>Pistas</label>
-						<input type="number" class="form-control" ng-model="inputForm.tracks"/>
-					</div>
-					
-					<div class="form-group">
-						<label>Escapan</label>
-						<input type="checkbox"  ng-model="inputForm.scaped"/> 
-					</div>
-					
-					<div ng-if="inputForm.scaped" class="form-group">
-						<label>Vivos</label>
-						<input type="checkbox"  ng-model="inputForm.scaped_alived"/> 
-					</div>
-					
-				</span>
-			</div>
-			
-			<div class="row">
-				<div class="form-inline">
-					<div class="form-group">
-						<label class="">Tiempo</label>
-						<div uib-timepicker class="time-picker" min="minTime" max="maxTime" ng-model="inputForm.time" ng-change="changed()" hour-step="1" minute-step="5" show-meridian="false"></div>
-					</div>
-				</div>
-			</div>
-			
-			<div class="row">
-				<span class="form-inline">				
-					<div class="form-group">
-						<label>Puntos</label>
-						<input type="number" class="form-control" ng-model="inputForm.score"/>
-						
-						
-						
-					</div>
-				</span>
-			</div>
-			
 			<div class="row">
 				<span class="form-inline">				
 					<div class="form-group">

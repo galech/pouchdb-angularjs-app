@@ -3,7 +3,7 @@ angular.module("pouchapp", ["ui.router", "ui.bootstrap", "infinite-scroll", ])
 .run(function($pouchDB) {
     $pouchDB.setDatabase("grupos");
     // $pouchDB.sync("http://localhost:4984/test-database");
-	$pouchDB.sync("https://couchdb-c65237.smileupps.com/groups");
+	$pouchDB.sync("https://cccouchdb-c65237.smileupps.com/groups");
 	// $pouchDB.sync("http://localhost:5984/groups");
 })
 
@@ -39,6 +39,74 @@ angular.module("pouchapp", ["ui.router", "ui.bootstrap", "infinite-scroll", ])
 	$scope.orderByOptions = ["selected", "position", "time", "name"];
 	$rootScope.currentGroupId = null
 
+	$scope.villaAmparo = [
+		[
+			{
+				type:"text",
+				required:true,
+				label:"Nombre",
+				key: "name"
+			},
+			{
+				type:"date",
+				label:"Fecha",
+				key: "date",
+				default:"today"
+			}
+		],
+		[	{
+				type:"number",
+				min: 0,
+				label:"Personas",
+				key: "people"
+			},
+			{
+				 type:"number",
+				 label:"Monitores",
+				 key: "received_by"
+			}
+		],
+		[
+			{
+				type:"number",
+				min:0,
+				label:"Diamantes",
+				key: "diamonds"
+			},
+			{
+				 type:"number",
+				 min:0,
+				 label:"Pistas",
+				 key: "tracks"
+			},
+			{
+				type:"boolean",
+				label:"Escapan",
+				key: "scaped"
+			},
+			{
+				 type:"boolean",
+				 label:"Vivos",
+				 key: "scaped_alived"
+			}
+		],
+		[
+			{
+				type:"duration",
+				label:"Tiempo",
+				key: "time"
+			}
+		],
+		[
+			{
+				type:"number",
+				label:"Puntuacion",
+				key: "score"
+			}
+		],
+	]
+	
+	
 	
     // Listen for changes which include create or update events
     $rootScope.$on("$pouchDB:changes", function(event, datas) {
