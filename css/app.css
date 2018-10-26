@@ -20,3 +20,49 @@ input.ng-invalid:focus {
 .edit-group-form .row {
   padding: 15px 15px;
 }
+
+input[type="number"].form-control{
+  width: 4.5em;
+}
+
+
+.form-group:first-child label {
+	width: 100px;
+	text-align: right;
+}
+
+.gen-score{
+	margin-left: 15px;
+}
+
+.photo-dialog-body{
+	width:100%;
+	height:500px;
+}
+
+.photo-container{
+	position:relative;
+}
+
+.remove-photo{
+	color: #5bc0de;
+	position: absolute;
+	right: 5px;
+	top:5px;
+	font-size:25px;
+}
+
+.group-image{
+	height:30px;
+}
+
+.selected-group{
+	background-color: #2693ff !important;
+}
+
+.row :nth-child(even){
+  background-color: #dcdcdc;
+}
+.row :nth-child(odd){
+  background-color: #aaaaaa;
+}

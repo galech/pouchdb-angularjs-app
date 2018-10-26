@@ -4,7 +4,6 @@
 
 
 	<div class="row">
-		<button type="button" class="btn btn-success" ng-click="takePhoto(inputForm)">Foto</button>
 		<button ng-disabled="groupForm.$invalid" type="button" class="pull-right btn btn-success" ng-click="save(inputForm)">Guardar</button>
 		<button type="button" class="pull-right btn btn-danger" ui-sref="main.list">Anular</button>
 	</div>
@@ -13,69 +12,95 @@
 	
 
 	
-	<div>
-		<div class="row">
-			<span class="form-inline">
-				<div class="form-group">
-					<label>Nombre</label>
-					<input required type="text" class="form-control" ng-model="inputForm.name"/>
-				</div>			
-			</span>
-		</div>
-		<div class="row">
-			<span class="form-inline">
-				<div class="form-group">
-					<label>Fecha</label>
-					<input class="form-control" type="date" ng-model="inputForm.date" placeholder="Seleccione una fecha"/>
+	<div class="row">
+		<div class="col-sm-8">
+			<div class="row">
+				<span class="form-inline">
+					<div class="form-group">
+						<label>Nombre</label>
+						<input required type="text" class="form-control" ng-model="inputForm.name"/>
+					</div>	
+					<div class="form-group">
+						<label>Fecha</label>
+						<input class="form-control" type="date" ng-model="inputForm.date" placeholder="Seleccione una fecha"/>
+					</div>
+				</span>
+			</div>
+			<div class="row">
+				<span class="form-inline">
+					<div class="form-group">
+						<label>Personas</label>
+						<input type="number" class="form-control" ng-model="inputForm.people"/>
+					</div>
+					<div class="form-group">
+						<label>Monitores</label>
+						<input type="number" class="form-control" ng-model="inputForm.received_by"/>
+					</div>
+					
+				</span>
+			</div>
+
+			
+			<div class="row">
+				<span class="form-inline">
+					<div class="form-group">
+						<label>Diamantes</label>
+						<input type="number" class="form-control" ng-model="inputForm.diamonds"/>
+					</div>
+					
+					<div class="form-group">
+						<label>Pistas</label>
+						<input type="number" class="form-control" ng-model="inputForm.tracks"/>
+					</div>
+					
+					<div class="form-group">
+						<label>Escapan</label>
+						<input type="checkbox"  ng-model="inputForm.scaped"/> 
+					</div>
+					
+					<div ng-if="inputForm.scaped" class="form-group">
+						<label>Vivos</label>
+						<input type="checkbox"  ng-model="inputForm.scaped_alived"/> 
+					</div>
+					
+				</span>
+			</div>
+			
+			<div class="row">
+				<div class="form-inline">
+					<div class="form-group">
+						<label class="">Tiempo</label>
+						<div uib-timepicker class="time-picker" min="minTime" max="maxTime" ng-model="inputForm.time" ng-change="changed()" hour-step="1" minute-step="5" show-meridian="false"></div>
+					</div>
 				</div>
-				<div class="form-group">
-					<label>Personas</label>
-					<input type="number" class="form-control" ng-model="inputForm.people"/>
-				</div>
-				<div class="form-group">
-					<label>Monitores</label>
-					<input type="number" class="form-control" ng-model="inputForm.received_by"/>
-				</div>
-				
-			</span>
-		</div>
-		<div class="row">
-			<div class="form-inline">
-				<div class="form-group">
-					<label class="">Tiempo</label>
-					<div uib-timepicker class="time-picker" min="minTime" max="maxTime" ng-model="inputForm.time" ng-change="changed()" hour-step="1" minute-step="5" show-meridian="false"></div>
-				</div>
+			</div>
+			
+			<div class="row">
+				<span class="form-inline">				
+					<div class="form-group">
+						<label>Puntos</label>
+						<input type="number" class="form-control" ng-model="inputForm.score"/><button type="button" class="btn btn-success gen-score" ng-click="genScore(inputForm)">Generar puntuacion</button>
+					</div>
+				</span>
 			</div>
 		</div>
 		
-		<div class="row">
-			<span class="form-inline">
-				<div class="form-group">
-					<label for="firstname">Diamantes</label>
-					<input type="number" class="form-control" ng-model="inputForm.diamonds"/>
-				</div>
-				
-				<div class="form-group">
-					<label for="firstname">Pistas</label>
-					<input type="number" class="form-control" ng-model="inputForm.tracks"/>
-				</div>
-				
-				<div class="form-group">
-					<label for="firstname">Escapan</label>
-					<input type="checkbox"  ng-model="inputForm.scaped"/> 
-				</div>
-				
-				<div ng-if="inputForm.scaped" class="form-group">
-					<label for="firstname">Vivos</label>
-					<input type="checkbox"  ng-model="inputForm.scaped_alived"/> 
-				</div>
-				
-				<div class="form-group">
-					<label for="firstname">Puntos</label>
-					<input type="number" class="form-control" ng-model="inputForm.score"/><button type="button" class="btn btn-success" ng-click="genScore(inputForm)">Generar puntuacion</button>
-				</div>
-			</span>
+		
+		<div class="col-sm-4">
+			<div ng-if="!currentPhoto" class="row text-center">
+				<span class="form-inline">
+					<div class="form-group">
+						<button type="button" class="btn btn-success" ng-click="takePhoto(inputForm)">Foto</button>
+					</div>	
+				</span>
+			</div>
+			<div ng-if="currentPhoto" class="photo-container">
+				<span ng-click="removePhoto()" class="remove-photo glyphicon glyphicon-remove"></span>
+				<img style="width:100%" src="{{currentPhoto}}"/>
+			</div>
+			
 		</div>
+		
 	</div>
 	   
 </form>

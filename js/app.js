@@ -3,6 +3,7 @@ angular.module("pouchapp", ["ui.router", "ui.bootstrap", "infinite-scroll", ])
 .run(function($pouchDB) {
     $pouchDB.setDatabase("groups");
     // $pouchDB.sync("http://localhost:4984/test-database");
+	// $pouchDB.sync("https://couchdb-c65237.smileupps.com/groups");
 	$pouchDB.sync("http://localhost:5984/groups");
 })
 
@@ -32,19 +33,20 @@ angular.module("pouchapp", ["ui.router", "ui.bootstrap", "infinite-scroll", ])
 
     $scope.items = {};
 	$scope.filteredGroups = []
-	$scope.limitInterval = 25;
+	$scope.limitInterval = 40;
     $pouchDB.startListening();
 	$scope.baseFilters = {'search_text': "",};
-	$scope.orderByOptions = ["position", "name"];
-	
+	$scope.orderByOptions = ["selected", "position", "time", "name"];
+	$rootScope.currentGroupId = null
 
 	
     // Listen for changes which include create or update events
     $rootScope.$on("$pouchDB:changes", function(event, datas) {
-		console.log(datas)
 		_.map(datas, function(data) {$scope.items[data.doc._id] = data.doc;})
 		$scope.filterItems();
         $scope.$apply();
+
+			
     });	
 	
     // Listen for changes which include only delete events
@@ -55,7 +57,7 @@ angular.module("pouchapp", ["ui.router", "ui.bootstrap", "infinite-scroll", ])
     });
 	
 	$scope.filterItems = function() {
-		console.log("filterItems")
+
 		var groupList = []
 
 		
@@ -107,9 +109,22 @@ angular.module("pouchapp", ["ui.router", "ui.bootstrap", "infinite-scroll", ])
 		}
 
 		$scope.filteredGroups = groupList
+		// $scope.limitedGroups = $scope.filteredGroups
 		$scope.limitedGroups = $filter('limitTo')($scope.filteredGroups, $scope.limitInterval) 
 		
 	}
+	
+	$scope.getGroupImage = function(group) {
+        if ( !group.src && group._attachments){
+			if (group._attachments["photo.jpeg"]){
+				$pouchDB.getAttachment(group._id, 'photo.jpeg').then(function (blob) {
+					  var url = URL.createObjectURL(blob);
+					  group.src = url;
+					  $scope.$apply();
+				})
+			}	
+		}
+    }
 	
 	
 	
@@ -117,34 +132,46 @@ angular.module("pouchapp", ["ui.router", "ui.bootstrap", "infinite-scroll", ])
 })
 
 
-.controller("ListController", function($scope, $rootScope, $state, $filter, $stateParams, $pouchDB) {
+.controller("ListController", function($scope, $rootScope, $state, $filter, $stateParams, $pouchDB, $timeout, $location, $anchorScroll) {
 
+		
+	$scope.createItems = function(){
+		n = 0
+		while (n < 1000) {
+			
+			
+			jsonDocument = {
+				"name": "caca"
+				
+				
+			}
+			
+			$pouchDB.save(jsonDocument).then(function(response) {
+				$rootScope.currentGroupId = response.id
+				$state.go("main.list");
+			}, function(error) {
+				console.log("ERROR -> " + error);
+			});
+		  
+		  n ++;
+		}	
+		
+	}
 
     $scope.delete = function(id, rev) {
         $pouchDB.delete(id, rev);
     }
 	
-
-	$scope.getGroupImage = function(group) {
-        if ( !group.src && group._attachments){
-			if (group._attachments["photo.jpeg"]){
-				console.log("dentro")
-				$pouchDB.getAttachment(group._id, 'photo.jpeg').then(function (blob) {
-					  var url = URL.createObjectURL(blob);
-					  console.log("mas dentro", blob, url, group._attachments["photo.jpeg"])
-					  group.src = url;
-					  $scope.$apply();
-				})
-				
-				// return "data:image/jpeg;base64,"+group._attachments["photo.jpeg"].data
-			}	
+	$timeout(function() {
+		if ($rootScope.currentGroupId && $scope.items[$rootScope.currentGroupId]){
+			$anchorScroll.yOffset = 100;
+			$location.hash($rootScope.currentGroupId);
+			$anchorScroll();
+			
 		}
-    }
+	});
 
-	
-	
 	$scope.addMoreItems = function(filteredGroups, limitedGroups, limitInterval) {
-		console.log("addMoreItems")
 		_.map($filter('limitTo')(filteredGroups, limitInterval, limitedGroups.length), function(group) {
 			limitedGroups.push(group)
 			
@@ -166,10 +193,13 @@ angular.module("pouchapp", ["ui.router", "ui.bootstrap", "infinite-scroll", ])
 	d2.setMinutes( 0 );
 	$scope.maxTime = d2;
 	
+	$scope.currentPhoto = null
+	
     // Look up a document if we landed in the info screen for editing a document
     if($stateParams.documentId) {
         $pouchDB.get($stateParams.documentId).then(function(result) {
             $scope.inputForm = result;
+			$rootScope.currentGroupId = $scope.inputForm._id
 			$scope.inputForm.date = new Date(result.date)
 			if (!$scope.inputForm.time){
 				var d = new Date();
@@ -178,7 +208,16 @@ angular.module("pouchapp", ["ui.router", "ui.bootstrap", "infinite-scroll", ])
 				$scope.inputForm.time = d;
 				
 			}
-			$scope.$apply();
+			if ($scope.inputForm._attachments && $scope.inputForm._attachments["photo.jpeg"]){
+				$pouchDB.getAttachment($scope.inputForm._id, 'photo.jpeg').then(function (blob) {
+					  var url = URL.createObjectURL(blob);
+					  $scope.currentPhoto = url
+					  $scope.$apply();
+				})
+			}
+			else{
+				$scope.$apply();
+			}
         });
     }
 	else{
@@ -192,9 +231,23 @@ angular.module("pouchapp", ["ui.router", "ui.bootstrap", "infinite-scroll", ])
 		};
 	}
 	
+    // Save a document with either an update or insert
+    $scope.save = function(inputForm) {
+        var jsonDocument = inputForm
+        // If we're updating, provide the most recent revision and document id
+        if($stateParams.documentId) {
+            jsonDocument["_id"] = $stateParams.documentId;
+            jsonDocument["_rev"] = $stateParams.documentRevision;
+        }
+        $pouchDB.save(jsonDocument).then(function(response) {
+			$rootScope.currentGroupId = response.id
+            $state.go("main.list");
+        }, function(error) {
+            console.log("ERROR -> " + error);
+        });
+    }
 	
 	$scope.genScore = function(inputForm) {
-		
 		
 		base_score = 30 + ((inputForm.diamonds || 0)*5) - ((inputForm.tracks || 0)*5)
 		if (inputForm.scaped){
@@ -208,22 +261,20 @@ angular.module("pouchapp", ["ui.router", "ui.bootstrap", "infinite-scroll", ])
 			var d = new Date(inputForm.time)
 			minutes = d.getHours()*60 + d.getMinutes()
 			penalties = Math.max(0, minutes-60)
-			
 			base_score -= penalties
-			
 			extra = Math.floor(Math.max(0, 60-minutes) / 10.0)
-			
 			base_score += extra
-			
 
-			
 		}
 		
 		inputForm.score = base_score
 		
 	}
 	
-	
+	$scope.removePhoto = function(){
+		$scope.currentPhoto = null
+		delete $scope.inputForm._attachments["photo.jpeg"]
+	}
 	
 	$scope.takePhoto = function(inputForm) {
 		
@@ -233,60 +284,62 @@ angular.module("pouchapp", ["ui.router", "ui.bootstrap", "infinite-scroll", ])
 			keyboard: true,
 			templateUrl: 'templates/take-photo.html',
 			controller: 'TakePhotoCtrl',
+			size: 'lg',
 		};
 
 		
 		$uibModal.open(dialogOpts).result.then(function (photo) {
-			console.log(photo)
-			// $ctrl.selected = selectedItem;
+			if (!inputForm._attachments){
+				inputForm._attachments = {}
+				
+			}
+			// picture = picture.replace(/^(data:image\/jpeg;base64,\.)/,"");
+			picture = photo.replace("data:image/jpeg;base64,","");
+			inputForm._attachments["photo.jpeg"] = {
+				content_type:'image/jpeg',
+				data:picture
+			}
+			
+			$scope.currentPhoto = photo
+			
+			
 		});
 		
 
     }
 
-	$scope.savePhoto = function(inputForm, picture) {
-		if (!inputForm._attachments){
-			inputForm._attachments = {}
-			
-		}
-		// picture = picture.replace(/^(data:image\/jpeg;base64,\.)/,"");
-		picture = picture.replace("data:image/jpeg;base64,","");
-		inputForm._attachments["photo.jpeg"] = {
-			content_type:'image/jpeg',
-			data:picture
-		}
-    }
-	
-		
-	
-    // Save a document with either an update or insert
-    $scope.save = function(inputForm) {
-        var jsonDocument = inputForm
-        // If we're updating, provide the most recent revision and document id
-        if($stateParams.documentId) {
-            jsonDocument["_id"] = $stateParams.documentId;
-            jsonDocument["_rev"] = $stateParams.documentRevision;
-        }
-        $pouchDB.save(jsonDocument).then(function(response) {
-            $state.go("main.list");
-        }, function(error) {
-            console.log("ERROR -> " + error);
-        });
-    }
+
 
 })
 
 .controller("TakePhotoCtrl", function($scope, $uibModalInstance) {
 	
-	$scope.pictures = []
 	$scope.acceptPhoto = function(photo) {
-		console.log(photo)
 		$uibModalInstance.close(photo);
 	}; 
 	$scope.cancel = function() {
 		$uibModalInstance.dismiss();
 	};
 })
+
+
+// .directive('scrollOnClick', function() {
+  // return {
+    // restrict: 'A',
+    // link: function(scope, $elm, attrs) {
+      // var idToScroll = attrs.href;
+      // $elm.on('click', function() {
+        // var $target;
+        // if (idToScroll) {
+          // $target = $(idToScroll);
+        // } else {
+          // $target = $elm;
+        // }
+        // $("body").animate({scrollTop: $target.offset().top}, "slow");
+      // });
+    // }
+  // }
+// });
 
 .directive('ngCamera', function($q, $timeout) {
 	
@@ -297,16 +350,14 @@ angular.module("pouchapp", ["ui.router", "ui.bootstrap", "infinite-scroll", ])
 			'flashFallbackUrl': '@',
 			'overlayUrl': '@',
 			'shutterUrl': '@',
-			'pictures': '='
+			'photoCallBack': '='
 		},
-		'template': '<div style="width: 500px;height: 500px;" ng-click="libraryLoaded && cameraLive && getSnapshot()" id="ng-camera-feed"></div>',
+		'template': '<div class="photo-dialog-body" ng-click="libraryLoaded && cameraLive && getSnapshot()" id="ng-camera-feed"></div>',
 		'link': link
 	};
 
         function link(scope, element, attrs) {
-            /**
-             * Set default variables
-             */
+
             scope.libraryLoaded = false;
             scope.cameraLive = false;
 
@@ -340,8 +391,7 @@ angular.module("pouchapp", ["ui.router", "ui.bootstrap", "infinite-scroll", ])
 
             scope.getSnapshot = function() {
 				Webcam.snap(function(data_uri) {
-					console.log(data_uri)
-					scope.pictures.push(data_uri);
+					scope.photoCallBack(data_uri);
 				});
 
             };

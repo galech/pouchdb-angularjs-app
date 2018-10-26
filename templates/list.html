@@ -5,26 +5,24 @@
     ></input> 
 <button class="btn btn-primary" ui-sref="main.item">Nuevo grupo</button>
 <br />
-<table class="table table-striped">
+<table class="table table-striped">	
     <thead>
         <tr>
-            <th>Ranking</th>
-            <th>Fecha</th>
+            <th>#</th>
             <th>Nombre</th>
             <th>Puntiacion</th>
+            <th>Fecha</th>
+            <th>Foto</th>
             <th></th>
         </tr>
     </thead>
     <tbody infinite-scroll-disabled="!limitedGroups || (filteredGroups.length == limitedGroups.length)" infinite-scroll="addMoreItems(filteredGroups, limitedGroups, limitInterval)">
 	
-        <tr ng-repeat="group in limitedGroups">
+        <tr ng-class=":: {'selected-group':  group._id == currentGroupId}" id="{{:: group._id}}" class="group-row" ng-repeat="group in limitedGroups">
+			
 			<td>
 				{{::group.position}}
 				<i ng-if="::group.position_global < 4" class="fa fa-trophy"></i>
-			</td>
-			
-			<td>
-				{{::group.date | date: "dd/MM/yyyy"}}
 			</td>
 			
             <td>
@@ -35,16 +33,20 @@
 			</td>
 			
 			<td>
+				{{::group.date | date: "dd/MM/yyyy"}}
+			</td>
 			
-				<img ng-init="getGroupImage(group)" src="{{group.src}}"/>
+
 			
+			<td class="group-image">
+				<img  class="group-image" ng-init="getGroupImage(group)" src="{{group.src}}"/>
 			</td>
 
             <!-- <td>{{group.lastname}}</td> -->
             <!-- <td>{{group.email}}</td> -->
 			<!-- {{group._id}} -->
 			<!-- {{group._rev}} -->
-            <td><a href="" ui-sref="main.item({ documentId: group._id, documentRevision: group._rev})">edit</a></td>
+            <td><span ui-sref="main.item({ documentId: group._id, documentRevision: group._rev})" class="glyphicon glyphicon-pencil"></span></td>
         </tr>
     </tbody>
 </table>
