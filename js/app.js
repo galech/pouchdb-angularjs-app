@@ -1,10 +1,10 @@
 angular.module("pouchapp", ["ui.router", "ui.bootstrap", "infinite-scroll", ])
 
 .run(function($pouchDB) {
-    $pouchDB.setDatabase("groups");
+    $pouchDB.setDatabase("grupos");
     // $pouchDB.sync("http://localhost:4984/test-database");
-	// $pouchDB.sync("https://couchdb-c65237.smileupps.com/groups");
-	$pouchDB.sync("http://localhost:5984/groups");
+	$pouchDB.sync("https://couchdb-c65237.smileupps.com/groups");
+	// $pouchDB.sync("http://localhost:5984/groups");
 })
 
 .config(function($stateProvider, $urlRouterProvider) {
