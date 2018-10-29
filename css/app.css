@@ -59,7 +59,23 @@ input[type="number"].form-control{
 
 .take-photo-btn{
 
-		margin-top:100px;
+		/* margin-top:100px; */
 		font-size:25px;
 	
 }
+
+body{
+	
+	background: url(imgpsh_fullsize.jpg) no-repeat center center fixed;	
+	font-size:20px;
+	font-weight:bold;
+	color:white;
+}
+
+.table-striped > tbody > tr:nth-of-type(2n+1){
+	background-color: rgba(249, 249, 249, 0.1);
+}
+
+/* tbody{ */
+	/* background-image: url('imgpsh_fullsize.jpg'); */
+/* } */

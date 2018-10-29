@@ -13,7 +13,7 @@
 
 	
 	<div class="row">
-		<div class="col-sm-8">
+		<div class="col-sm-7">
 		
 			<div class="row" ng-repeat="formLine in villaAmparo">
 				<span class="form-inline">
@@ -24,25 +24,20 @@
 							<input ng-switch-when="date" ng-model="inputForm[field.key]" ng-required="field.required" type="date"></input>
 							<input ng-switch-when="number" ng-model="inputForm[field.key]" ng-min="field.min" ng-required="field.required" class="form-control" type="number"></input>
 							<input ng-switch-when="boolean" ng-model="inputForm[field.key]" ng-required="field.required"  type="checkbox"></input>
-							<div ng-switch-when="duration" uib-timepicker ng-model="inputForm[field.key]" hour-step="1" minute-step="5" ng-required="field.required"  min="field.min" max="field.max" class=" time-picker" show-meridian="false"></div>
+							<textarea class="form-control" ng-switch-when="text-area" ng-model="inputForm[field.key]" ng-required="field.required"></textarea>
+							<div ng-switch-when="duration" uib-timepicker ng-model="inputForm[field.key]" hour-step="1" minute-step="5" ng-required="field.required"  min="minTime" max="maxTime" class="time-picker" show-meridian="false"></div>
 						</span>
+						<span ng-if="field.extra_action"><button type="button" class="btn btn-success" ng-click="autoFunction(inputForm, field.to_evaluate)">{{field.extra_action}}</button></span>
 
 					</div>	
 				</span>
 			</div>
 
-			<div class="row">
-				<span class="form-inline">				
-					<div class="form-group">
-						<button type="button" class="btn btn-success" ng-click="genScore(inputForm)">Generar puntuacion</button>	
-					</div>
-				</span>
-			</div>
 		</div>
 		
 		
-		<div class="col-sm-4">
-			<div ng-if="!currentPhoto" class="row text-center">
+		<div class="col-sm-5">
+			<div class="row text-center">
 				<span class="form-inline">
 					<div class="form-group">
 						<a ng-click="takePhoto(inputForm)" href="#" class="take-photo-btn btn btn-default">
@@ -51,9 +46,9 @@
 					</div>	
 				</span>
 			</div>
-			<div ng-if="currentPhoto" class="photo-container">
-				<span ng-click="removePhoto()" class="remove-photo glyphicon glyphicon-remove"></span>
-				<img style="width:100%" src="{{currentPhoto}}"/>
+			<div class="photo-container" ng-repeat="photo in attachements">
+				<span ng-click="removePhoto(photo)" class="remove-photo glyphicon glyphicon-remove"></span>
+				<img style="width:100%" src="{{photo.src}}"/>
 			</div>
 			
 		</div>

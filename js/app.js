@@ -37,7 +37,6 @@ angular.module("pouchapp", ["ui.router", "ui.bootstrap", "infinite-scroll", ])
     $pouchDB.startListening();
 	$scope.baseFilters = {'search_text': "",};
 	$scope.orderByOptions = ["selected", "position", "time", "name"];
-	$rootScope.currentGroupId = null
 
 	$scope.villaAmparo = [
 		[
@@ -45,13 +44,13 @@ angular.module("pouchapp", ["ui.router", "ui.bootstrap", "infinite-scroll", ])
 				type:"text",
 				required:true,
 				label:"Nombre",
-				key: "name"
+				key: "name",
 			},
 			{
 				type:"date",
 				label:"Fecha",
 				key: "date",
-				default:"today"
+				today:true
 			}
 		],
 		[	{
@@ -94,20 +93,52 @@ angular.module("pouchapp", ["ui.router", "ui.bootstrap", "infinite-scroll", ])
 			{
 				type:"duration",
 				label:"Tiempo",
-				key: "time"
+				key: "time",
+				minuts: "60"
 			}
 		],
 		[
 			{
 				type:"number",
 				label:"Puntuacion",
-				key: "score"
+				key: "score",
+				extra_action: "Auto-Generar puntuacion",
+				to_evaluate: "base_score = 30 + ((data.diamonds || 0)*5) - ((data.tracks || 0)*5);if (data.scaped){base_score += 20;if (data.scaped_alived){base_score += 20;}}if (data.time){var d = new Date(data.time);minutes = d.getHours()*60 + d.getMinutes();penalties = Math.max(0, minutes-60);base_score -= penalties;extra = Math.floor(Math.max(0, 60-minutes) / 10.0);base_score += extra;}data.score = base_score;"
 			}
 		],
+		[
+			{
+				type:"text-area",
+				label:"Comentarios",
+				key: "comments"
+			}
+		],
+		[
+			{
+				type:"text-area",
+				label:"Incidencias",
+				key: "incidence"
+			}
+		],
+		[
+			{
+				type:"number",
+				label:"Precio",
+				key: "price",
+				extra_action: "Auto-Generar precio",
+				to_evaluate: "data.price = (data.people || 0) * 15"
+			}
+		],
+		
 	]
 	
+
 	
 	
+	$scope.groupFields = []
+	_.map($scope.villaAmparo, function(row){_.map(row, function(field){$scope.groupFields.push(field)})})
+
+
     // Listen for changes which include create or update events
     $rootScope.$on("$pouchDB:changes", function(event, datas) {
 		_.map(datas, function(data) {$scope.items[data.doc._id] = data.doc;})
@@ -129,41 +160,10 @@ angular.module("pouchapp", ["ui.router", "ui.bootstrap", "infinite-scroll", ])
 		var groupList = []
 
 		
-		_.forOwn($scope.items, function(doc, doc_id) {
-			groupList.push(doc)
-	
-		});
+		_.forOwn($scope.items, function(doc, doc_id) {groupList.push(doc)});
 		
 		groupList = $filter('orderBy')(groupList, ["-score", "time"])
-		
-		var score = false
-		var position_relative = 0
-		var position_global = 0
-		var index = 0
-		_.map(groupList, function(group) {
-			
-			if (group.score){
-				index += 1
-				if (score != group.score){
-					position_relative = index;	
-					score = group.score;
-				}
-				
-				position_global +=1 
-				
-				
-				
-				group.position = position_relative
-				group.position_global = position_global
-				if (group.position_global < 4){
-					
-					
-				}
-				
-				
-			}
-			
-		});
+		_.map(_.filter(groupList, function(group) {return group.score}), function(group, index) { group.position = index + 1});
 		
 		groupList = $filter('orderBy')(groupList, $scope.orderByOptions)
 		
@@ -177,22 +177,35 @@ angular.module("pouchapp", ["ui.router", "ui.bootstrap", "infinite-scroll", ])
 		}
 
 		$scope.filteredGroups = groupList
-		// $scope.limitedGroups = $scope.filteredGroups
 		$scope.limitedGroups = $filter('limitTo')($scope.filteredGroups, $scope.limitInterval) 
 		
 	}
 	
-	$scope.getGroupImage = function(group) {
+	$scope.randomKey = function (obj) {
+		var keys = Object.keys(obj)
+		return keys[ keys.length * Math.random() << 0]
+		
+	};
+	
+	
+	$scope.getRandomGroupImage = function(group) {
         if ( !group.src && group._attachments){
-			if (group._attachments["photo.jpeg"]){
-				$pouchDB.getAttachment(group._id, 'photo.jpeg').then(function (blob) {
+				$pouchDB.getAttachment(group._id, $scope.randomKey(group._attachments)).then(function (blob) {
 					  var url = URL.createObjectURL(blob);
 					  group.src = url;
 					  $scope.$apply();
 				})
-			}	
 		}
     }
+	
+	$scope.guid = function() {
+	  function s4() {
+		return Math.floor((1 + Math.random()) * 0x10000)
+		  .toString(16)
+		  .substring(1);
+	  }
+	  return s4() + s4() + '-' + s4() + '-' + s4() + '-' + s4() + '-' + s4() + s4() + s4();
+	};
 	
 	
 	
@@ -203,42 +216,10 @@ angular.module("pouchapp", ["ui.router", "ui.bootstrap", "infinite-scroll", ])
 .controller("ListController", function($scope, $rootScope, $state, $filter, $stateParams, $pouchDB, $timeout, $location, $anchorScroll) {
 
 		
-	$scope.createItems = function(){
-		n = 0
-		while (n < 1000) {
-			
-			
-			jsonDocument = {
-				"name": "caca"
-				
-				
-			}
-			
-			$pouchDB.save(jsonDocument).then(function(response) {
-				$rootScope.currentGroupId = response.id
-				$state.go("main.list");
-			}, function(error) {
-				console.log("ERROR -> " + error);
-			});
-		  
-		  n ++;
-		}	
-		
-	}
-
     $scope.delete = function(id, rev) {
         $pouchDB.delete(id, rev);
     }
 	
-	$timeout(function() {
-		if ($rootScope.currentGroupId && $scope.items[$rootScope.currentGroupId]){
-			$anchorScroll.yOffset = 100;
-			$location.hash($rootScope.currentGroupId);
-			$anchorScroll();
-			
-		}
-	});
-
 	$scope.addMoreItems = function(filteredGroups, limitedGroups, limitInterval) {
 		_.map($filter('limitTo')(filteredGroups, limitInterval, limitedGroups.length), function(group) {
 			limitedGroups.push(group)
@@ -257,31 +238,30 @@ angular.module("pouchapp", ["ui.router", "ui.bootstrap", "infinite-scroll", ])
 	$scope.minTime = d;
 	
 	var d2 = new Date();
-	d2.setHours( 3 );
-	d2.setMinutes( 0 );
+	d2.setHours( 22 );
+	d2.setMinutes( 00 );
 	$scope.maxTime = d2;
 	
-	$scope.currentPhoto = null
+	$scope.attachements = []
 	
     // Look up a document if we landed in the info screen for editing a document
     if($stateParams.documentId) {
         $pouchDB.get($stateParams.documentId).then(function(result) {
             $scope.inputForm = result;
-			$rootScope.currentGroupId = $scope.inputForm._id
-			$scope.inputForm.date = new Date(result.date)
-			if (!$scope.inputForm.time){
-				var d = new Date();
-				d.setHours( 4 );
-				d.setMinutes( 0 );
-				$scope.inputForm.time = d;
-				
-			}
-			if ($scope.inputForm._attachments && $scope.inputForm._attachments["photo.jpeg"]){
-				$pouchDB.getAttachment($scope.inputForm._id, 'photo.jpeg').then(function (blob) {
-					  var url = URL.createObjectURL(blob);
-					  $scope.currentPhoto = url
-					  $scope.$apply();
-				})
+			_.map($scope.groupFields, function(groupField){
+				if (groupField.type == "date" && $scope.inputForm[groupField.key]){
+					$scope.inputForm[groupField.key] = new Date($scope.inputForm[groupField.key])	
+				}
+			})
+			if ($scope.inputForm._attachments){
+				_.forOwn($scope.inputForm._attachments, function(value, key) { 
+					$pouchDB.getAttachment($scope.inputForm._id, key).then(function (blob) {
+						  var url = URL.createObjectURL(blob);
+						  $scope.attachements.push({uid:key, src:url})
+						  $scope.$apply();
+					})
+				} );
+
 			}
 			else{
 				$scope.$apply();
@@ -289,14 +269,19 @@ angular.module("pouchapp", ["ui.router", "ui.bootstrap", "infinite-scroll", ])
         });
     }
 	else{
-		var d = new Date();
-		d.setHours( 1 );
-		d.setMinutes( 0 );
-		$scope.inputForm = {
-			"date":new Date(),
-			"time": d
-
-		};
+		$scope.inputForm = {};
+		_.map($scope.groupFields, function(groupField){
+			if (groupField.today){
+				$scope.inputForm[groupField.key] = new Date()	
+			}
+			if (groupField.minuts){
+				var d = new Date();
+				d.setHours( 0 );
+				d.setMinutes(groupField.minuts);
+				$scope.inputForm[groupField.key] = d;
+			}
+		})
+		
 	}
 	
     // Save a document with either an update or insert
@@ -308,40 +293,19 @@ angular.module("pouchapp", ["ui.router", "ui.bootstrap", "infinite-scroll", ])
             jsonDocument["_rev"] = $stateParams.documentRevision;
         }
         $pouchDB.save(jsonDocument).then(function(response) {
-			$rootScope.currentGroupId = response.id
             $state.go("main.list");
         }, function(error) {
             console.log("ERROR -> " + error);
         });
     }
 	
-	$scope.genScore = function(inputForm) {
-		
-		base_score = 30 + ((inputForm.diamonds || 0)*5) - ((inputForm.tracks || 0)*5)
-		if (inputForm.scaped){
-			base_score += 20
-			if (inputForm.scaped_alived){
-				base_score += 20
-			}
-		}
-		
-		if (inputForm.time){
-			var d = new Date(inputForm.time)
-			minutes = d.getHours()*60 + d.getMinutes()
-			penalties = Math.max(0, minutes-60)
-			base_score -= penalties
-			extra = Math.floor(Math.max(0, 60-minutes) / 10.0)
-			base_score += extra
-
-		}
-		
-		inputForm.score = base_score
-		
+	$scope.autoFunction = function(data, toEvaluate) {
+		return eval(toEvaluate);
 	}
-	
-	$scope.removePhoto = function(){
-		$scope.currentPhoto = null
-		delete $scope.inputForm._attachments["photo.jpeg"]
+		
+	$scope.removePhoto = function(photo){
+		_.remove($scope.attachements, photo)
+		delete $scope.inputForm._attachments[photo.uid]
 	}
 	
 	$scope.takePhoto = function(inputForm) {
@@ -361,14 +325,15 @@ angular.module("pouchapp", ["ui.router", "ui.bootstrap", "infinite-scroll", ])
 				inputForm._attachments = {}
 				
 			}
-			// picture = picture.replace(/^(data:image\/jpeg;base64,\.)/,"");
+	
+			uid = $scope.guid()
 			picture = photo.replace("data:image/jpeg;base64,","");
-			inputForm._attachments["photo.jpeg"] = {
+			inputForm._attachments[uid] = {
 				content_type:'image/jpeg',
 				data:picture
 			}
 			
-			$scope.currentPhoto = photo
+			$scope.attachements.unshift({uid:uid, src:photo})
 			
 			
 		});
@@ -389,25 +354,6 @@ angular.module("pouchapp", ["ui.router", "ui.bootstrap", "infinite-scroll", ])
 		$uibModalInstance.dismiss();
 	};
 })
-
-
-// .directive('scrollOnClick', function() {
-  // return {
-    // restrict: 'A',
-    // link: function(scope, $elm, attrs) {
-      // var idToScroll = attrs.href;
-      // $elm.on('click', function() {
-        // var $target;
-        // if (idToScroll) {
-          // $target = $(idToScroll);
-        // } else {
-          // $target = $elm;
-        // }
-        // $("body").animate({scrollTop: $target.offset().top}, "slow");
-      // });
-    // }
-  // }
-// });
 
 .directive('ngCamera', function($q, $timeout) {
 	

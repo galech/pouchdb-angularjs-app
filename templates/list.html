@@ -18,11 +18,11 @@
     </thead>
     <tbody infinite-scroll-disabled="!limitedGroups || (filteredGroups.length == limitedGroups.length)" infinite-scroll="addMoreItems(filteredGroups, limitedGroups, limitInterval)">
 	
-        <tr ng-class=":: {'selected-group':  group._id == currentGroupId}" id="{{:: group._id}}" class="group-row" ng-repeat="group in limitedGroups">
+        <tr id="{{:: group._id}}" class="group-row" ng-repeat="group in limitedGroups">
 			
 			<td>
 				{{::group.position}}
-				<i ng-if="::group.position_global < 4" class="fa fa-trophy"></i>
+				<i ng-if="::group.position < 4" class="fa fa-trophy"></i>
 			</td>
 			
             <td>
@@ -39,7 +39,7 @@
 
 			
 			<td class="group-image">
-				<img  class="group-image" ng-init="getGroupImage(group)" src="{{group.src}}"/>
+				<img  class="group-image" ng-init="getRandomGroupImage(group)" src="{{group.src}}"/>
 			</td>
 
             <!-- <td>{{group.lastname}}</td> -->
