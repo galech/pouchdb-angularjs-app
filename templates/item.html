@@ -9,13 +9,10 @@
 	</div>
 	
 	
-	
-
-	
 	<div class="row">
 		<div class="col-sm-7">
 		
-			<div class="row" ng-repeat="formLine in villaAmparo">
+			<div class="row" ng-repeat="formLine in configFields">
 				<span class="form-inline">
 					<div class="form-group" ng-repeat="field in formLine">
 						<label>{{field.label}}</label>
@@ -26,6 +23,21 @@
 							<input ng-switch-when="boolean" ng-model="inputForm[field.key]" ng-required="field.required"  type="checkbox"></input>
 							<textarea class="form-control" ng-switch-when="text-area" ng-model="inputForm[field.key]" ng-required="field.required"></textarea>
 							<div ng-switch-when="duration" uib-timepicker ng-model="inputForm[field.key]" hour-step="1" minute-step="5" ng-required="field.required"  min="minTime" max="maxTime" class="time-picker" show-meridian="false"></div>
+							
+							<!-- <span class="staff-input"  ng-dropdown-multiselect="" options="example13data" selected-model="example13model" extra-settings="example13settings"> -->
+							<!-- </span> -->
+							
+							<span ng-switch-when="multi_select">
+								<ui-select class="form-control" style="min-width: 120px;"multiple ng-model="inputForm[field.key]" theme="bootstrap"  close-on-select="false" title="Choose a color">
+									<ui-select-match placeholder="Selecciona monitores">{{$item}}</ui-select-match>
+									<ui-select-choices repeat="option in field.choices | filter:$select.search">
+										{{option}}
+									</ui-select-choices>
+								</ui-select>
+							</span>
+
+							
+						
 						</span>
 						<span ng-if="field.extra_action"><button type="button" class="btn btn-success" ng-click="autoFunction(inputForm, field.to_evaluate)">{{field.extra_action}}</button></span>
 
@@ -54,5 +66,5 @@
 		</div>
 		
 	</div>
-	   
+
 </form>

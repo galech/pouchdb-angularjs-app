@@ -1,10 +1,15 @@
-angular.module("pouchapp", ["ui.router", "ui.bootstrap", "infinite-scroll", ])
+angular.module("pouchapp", ["ui.router", "ui.bootstrap", "infinite-scroll", "ui.select", "ngSanitize"])
 
-.run(function($pouchDB) {
-    $pouchDB.setDatabase("grupos");
-    // $pouchDB.sync("http://localhost:4984/test-database");
-	$pouchDB.sync("https://cccouchdb-c65237.smileupps.com/groups");
-	// $pouchDB.sync("http://localhost:5984/groups");
+.run(function($groupDB, $configDB) {
+    $groupDB.setDatabase("grupos");
+	$groupDB.sync("https://couchdb-c65237.smileupps.com/groups");
+	
+	
+	$configDB.setDatabase("config");
+	$configDB.sync("https://couchdb-c65237.smileupps.com/config");
+
+	
+	
 })
 
 .config(function($stateProvider, $urlRouterProvider) {
@@ -12,7 +17,12 @@ angular.module("pouchapp", ["ui.router", "ui.bootstrap", "infinite-scroll", ])
         .state("main", {
             "url": "/main",
 			"abstract": true,
-            "controller": 'BaseController'
+            "controller": 'BaseController',
+			"resolve": {
+				"configDocument": function($configDB){
+					return $configDB.get("configuration");
+				}
+			}
         })
         .state("main.list", {
             "url": "/list",
@@ -29,128 +39,31 @@ angular.module("pouchapp", ["ui.router", "ui.bootstrap", "infinite-scroll", ])
 })
 
 
-.controller("BaseController", function($scope, $rootScope, $filter, $state, $stateParams, $pouchDB) {
+.controller("BaseController", function($scope, $rootScope, $filter, $state, $stateParams, $groupDB, $configDB, configDocument) {
 
-    $scope.items = {};
+    $scope.groupsById = {};
 	$scope.filteredGroups = []
 	$scope.limitInterval = 40;
-    $pouchDB.startListening();
+    $groupDB.startListening();
 	$scope.baseFilters = {'search_text': "",};
 	$scope.orderByOptions = ["selected", "position", "time", "name"];
 
-	$scope.villaAmparo = [
-		[
-			{
-				type:"text",
-				required:true,
-				label:"Nombre",
-				key: "name",
-			},
-			{
-				type:"date",
-				label:"Fecha",
-				key: "date",
-				today:true
-			}
-		],
-		[	{
-				type:"number",
-				min: 0,
-				label:"Personas",
-				key: "people"
-			},
-			{
-				 type:"number",
-				 label:"Monitores",
-				 key: "received_by"
-			}
-		],
-		[
-			{
-				type:"number",
-				min:0,
-				label:"Diamantes",
-				key: "diamonds"
-			},
-			{
-				 type:"number",
-				 min:0,
-				 label:"Pistas",
-				 key: "tracks"
-			},
-			{
-				type:"boolean",
-				label:"Escapan",
-				key: "scaped"
-			},
-			{
-				 type:"boolean",
-				 label:"Vivos",
-				 key: "scaped_alived"
-			}
-		],
-		[
-			{
-				type:"duration",
-				label:"Tiempo",
-				key: "time",
-				minuts: "60"
-			}
-		],
-		[
-			{
-				type:"number",
-				label:"Puntuacion",
-				key: "score",
-				extra_action: "Auto-Generar puntuacion",
-				to_evaluate: "base_score = 30 + ((data.diamonds || 0)*5) - ((data.tracks || 0)*5);if (data.scaped){base_score += 20;if (data.scaped_alived){base_score += 20;}}if (data.time){var d = new Date(data.time);minutes = d.getHours()*60 + d.getMinutes();penalties = Math.max(0, minutes-60);base_score -= penalties;extra = Math.floor(Math.max(0, 60-minutes) / 10.0);base_score += extra;}data.score = base_score;"
-			}
-		],
-		[
-			{
-				type:"text-area",
-				label:"Comentarios",
-				key: "comments"
-			}
-		],
-		[
-			{
-				type:"text-area",
-				label:"Incidencias",
-				key: "incidence"
-			}
-		],
-		[
-			{
-				type:"number",
-				label:"Precio",
-				key: "price",
-				extra_action: "Auto-Generar precio",
-				to_evaluate: "data.price = (data.people || 0) * 15"
-			}
-		],
-		
-	]
-	
 
-	
-	
+	$scope.configFields = configDocument.config
 	$scope.groupFields = []
-	_.map($scope.villaAmparo, function(row){_.map(row, function(field){$scope.groupFields.push(field)})})
+	_.map($scope.configFields, function(row){_.map(row, function(field){$scope.groupFields.push(field)})})
 
-
+	
     // Listen for changes which include create or update events
-    $rootScope.$on("$pouchDB:changes", function(event, datas) {
-		_.map(datas, function(data) {$scope.items[data.doc._id] = data.doc;})
+    $rootScope.$on("$groupDB:changes", function(event, datas) {
+		_.map(datas, function(data) {$scope.groupsById[data.doc._id] = data.doc;})
 		$scope.filterItems();
         $scope.$apply();
-
-			
     });	
 	
     // Listen for changes which include only delete events
-    $rootScope.$on("$pouchDB:deletes", function(event, datas) {
-		_.map(datas, function(data) {delete $scope.items[data.doc._id];})
+    $rootScope.$on("$groupDB:deletes", function(event, datas) {
+		_.map(datas, function(data) {delete $scope.groupsById[data.doc._id];})
 		$scope.filterItems();
         $scope.$apply();
     });
@@ -160,7 +73,7 @@ angular.module("pouchapp", ["ui.router", "ui.bootstrap", "infinite-scroll", ])
 		var groupList = []
 
 		
-		_.forOwn($scope.items, function(doc, doc_id) {groupList.push(doc)});
+		_.forOwn($scope.groupsById, function(doc, doc_id) {groupList.push(doc)});
 		
 		groupList = $filter('orderBy')(groupList, ["-score", "time"])
 		_.map(_.filter(groupList, function(group) {return group.score}), function(group, index) { group.position = index + 1});
@@ -190,7 +103,7 @@ angular.module("pouchapp", ["ui.router", "ui.bootstrap", "infinite-scroll", ])
 	
 	$scope.getRandomGroupImage = function(group) {
         if ( !group.src && group._attachments){
-				$pouchDB.getAttachment(group._id, $scope.randomKey(group._attachments)).then(function (blob) {
+				$groupDB.getAttachment(group._id, $scope.randomKey(group._attachments)).then(function (blob) {
 					  var url = URL.createObjectURL(blob);
 					  group.src = url;
 					  $scope.$apply();
@@ -213,11 +126,11 @@ angular.module("pouchapp", ["ui.router", "ui.bootstrap", "infinite-scroll", ])
 })
 
 
-.controller("ListController", function($scope, $rootScope, $state, $filter, $stateParams, $pouchDB, $timeout, $location, $anchorScroll) {
+.controller("ListController", function($scope, $rootScope, $state, $filter, $stateParams, $groupDB, $timeout, $location, $anchorScroll) {
 
 		
     $scope.delete = function(id, rev) {
-        $pouchDB.delete(id, rev);
+        $groupDB.delete(id, rev);
     }
 	
 	$scope.addMoreItems = function(filteredGroups, limitedGroups, limitInterval) {
@@ -229,7 +142,7 @@ angular.module("pouchapp", ["ui.router", "ui.bootstrap", "infinite-scroll", ])
 
 })
 
-.controller("DetailController", function($scope, $rootScope, $state, $stateParams, $uibModal, $pouchDB) {
+.controller("DetailController", function($scope, $rootScope, $state, $stateParams, $uibModal, $groupDB) {
 
 
 	var d = new Date();
@@ -244,9 +157,13 @@ angular.module("pouchapp", ["ui.router", "ui.bootstrap", "infinite-scroll", ])
 	
 	$scope.attachements = []
 	
+	$scope.example13model = []; 
+	$scope.options = [ "coco", "kiko", "amigo", "hermano"] 
+	$scope.example13data = [ {id: 1, label: "David"}, {id: 2, label: "Jhon"}, {id: 3, label: "Lisa"}, {id: 4, label: "Nicole"}, {id: 5, label: "Danny"} ]; 
+	$scope.example13settings = { smartButtonMaxItems: 10 , enableSearch:true, showCheckAll:false, showUncheckAll:false};
     // Look up a document if we landed in the info screen for editing a document
     if($stateParams.documentId) {
-        $pouchDB.get($stateParams.documentId).then(function(result) {
+        $groupDB.get($stateParams.documentId).then(function(result) {
             $scope.inputForm = result;
 			_.map($scope.groupFields, function(groupField){
 				if (groupField.type == "date" && $scope.inputForm[groupField.key]){
@@ -255,7 +172,7 @@ angular.module("pouchapp", ["ui.router", "ui.bootstrap", "infinite-scroll", ])
 			})
 			if ($scope.inputForm._attachments){
 				_.forOwn($scope.inputForm._attachments, function(value, key) { 
-					$pouchDB.getAttachment($scope.inputForm._id, key).then(function (blob) {
+					$groupDB.getAttachment($scope.inputForm._id, key).then(function (blob) {
 						  var url = URL.createObjectURL(blob);
 						  $scope.attachements.push({uid:key, src:url})
 						  $scope.$apply();
@@ -292,7 +209,7 @@ angular.module("pouchapp", ["ui.router", "ui.bootstrap", "infinite-scroll", ])
             jsonDocument["_id"] = $stateParams.documentId;
             jsonDocument["_rev"] = $stateParams.documentRevision;
         }
-        $pouchDB.save(jsonDocument).then(function(response) {
+        $groupDB.save(jsonDocument).then(function(response) {
             $state.go("main.list");
         }, function(error) {
             console.log("ERROR -> " + error);
@@ -416,7 +333,7 @@ angular.module("pouchapp", ["ui.router", "ui.bootstrap", "infinite-scroll", ])
         }
 })
 
-.service("$pouchDB", ["$rootScope", "$q", function($rootScope, $q) {
+.service("$groupDB", ["$rootScope", "$q", function($rootScope, $q) {
 
     var database;
     var changeListener;
@@ -433,14 +350,14 @@ angular.module("pouchapp", ["ui.router", "ui.bootstrap", "infinite-scroll", ])
 			since: 'now'
 		}).on("change", function(change) {
             if(!change.deleted) {
-                $rootScope.$broadcast("$pouchDB:changes", [change]);
+                $rootScope.$broadcast("$groupDB:changes", [change]);
             } else {
-                $rootScope.$broadcast("$pouchDB:deletes", [change]);
+                $rootScope.$broadcast("$groupDB:deletes", [change]);
             }
         });
 		
 		database.allDocs({include_docs: true}).then(function (result) {
-			$rootScope.$broadcast("$pouchDB:changes", result.rows);
+			$rootScope.$broadcast("$groupDB:changes", result.rows);
 
 		})		
 
@@ -448,6 +365,61 @@ angular.module("pouchapp", ["ui.router", "ui.bootstrap", "infinite-scroll", ])
 
     this.stopListening = function() {
         changeListener.cancel();
+    }
+
+    this.sync = function(remoteDatabase) {
+        database.sync(remoteDatabase, {live: false, retry: false});
+    }
+
+    this.save = function(jsonDocument) {
+        var deferred = $q.defer();
+        if(!jsonDocument._id) {
+            database.post(jsonDocument).then(function(response) {
+                deferred.resolve(response);
+            }).catch(function(error) {
+                deferred.reject(error);
+            });
+        } else {
+            database.put(jsonDocument).then(function(response) {
+                deferred.resolve(response);
+            }).catch(function(error) {
+                deferred.reject(error);
+            });
+        }
+        return deferred.promise;
+    }
+
+    this.delete = function(documentId, documentRevision) {
+        return database.remove(documentId, documentRevision);
+    }
+	
+	
+	this.put = function(put_dict) {
+        return database.put(put_dict);
+    }
+
+    this.get = function(documentId) {
+        return database.get(documentId);
+    }
+
+	this.getAttachment = function(documentId, attachement) {
+        return database.getAttachment(documentId, attachement);
+    }
+	
+    this.destroy = function() {
+        database.destroy();
+    }
+
+}])
+
+
+.service("$configDB", ["$rootScope", "$q", function($rootScope, $q) {
+
+    var database;
+    var changeListener;
+
+    this.setDatabase = function(databaseName) {
+        database = new PouchDB(databaseName);
     }
 
     this.sync = function(remoteDatabase) {
@@ -493,6 +465,6 @@ angular.module("pouchapp", ["ui.router", "ui.bootstrap", "infinite-scroll", ])
         database.destroy();
     }
 
-}]);
+}])
 
-
+;
