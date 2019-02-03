@@ -19,14 +19,14 @@
 						<span ng-switch="field.type">
 							<input ng-switch-when="text" ng-model="inputForm[field.key]" ng-required="field.required" type="text" class="form-control"></input>
 							<input ng-switch-when="date" ng-model="inputForm[field.key]" ng-required="field.required" type="date"></input>
-							<input ng-switch-when="number" ng-model="inputForm[field.key]" ng-min="field.min" ng-required="field.required" class="form-control" type="number"></input>
+							<!-- <input ng-switch-when="number" ng-model="inputForm[field.key]" ng-min="field.min" ng-required="field.required" class="form-control" type="number"></input> -->
+							<span ng-switch-when="number">
+							<h-number  value="inputForm[field.key]" min="field.min" max="field.max" step="field.step">{{inputForm[field.key]}}</h-number>
+							</span>
+							
 							<input ng-switch-when="boolean" ng-model="inputForm[field.key]" ng-required="field.required"  type="checkbox"></input>
 							<textarea class="form-control" ng-switch-when="text-area" ng-model="inputForm[field.key]" ng-required="field.required"></textarea>
-							<div ng-switch-when="duration" uib-timepicker ng-model="inputForm[field.key]" hour-step="1" minute-step="5" ng-required="field.required"  min="minTime" max="maxTime" class="time-picker" show-meridian="false"></div>
-							
-							<!-- <span class="staff-input"  ng-dropdown-multiselect="" options="example13data" selected-model="example13model" extra-settings="example13settings"> -->
-							<!-- </span> -->
-							
+							<div ng-switch-when="duration" uib-timepicker ng-model="inputForm[field.key]" hour-step="1" minute-step="1" ng-required="field.required"  min="minTime" max="maxTime" class="time-picker" show-meridian="false"></div>						
 							<span ng-switch-when="multi_select">
 								<ui-select class="form-control" style="min-width: 120px;"multiple ng-model="inputForm[field.key]" theme="bootstrap"  close-on-select="false" title="Choose a color">
 									<ui-select-match placeholder="Selecciona monitores">{{$item}}</ui-select-match>

@@ -1,4 +1,4 @@
-angular.module("pouchapp", ["ui.router", "ui.bootstrap", "infinite-scroll", "ui.select", "ngSanitize"])
+angular.module("pouchapp", ["ui.router", "ui.bootstrap", "infinite-scroll", "ui.select", "ngSanitize", "ngNumberPicker"])
 
 .run(function($groupDB, $configDB) {
     $groupDB.setDatabase("grupos");
@@ -76,7 +76,7 @@ angular.module("pouchapp", ["ui.router", "ui.bootstrap", "infinite-scroll", "ui.
 		_.forOwn($scope.groupsById, function(doc, doc_id) {groupList.push(doc)});
 		
 		groupList = $filter('orderBy')(groupList, ["-score", "time"])
-		_.map(_.filter(groupList, function(group) {return group.score}), function(group, index) { group.position = index + 1});
+		_.map(groupList, function(group, index) { group.position = index + 1});
 		
 		groupList = $filter('orderBy')(groupList, $scope.orderByOptions)
 		

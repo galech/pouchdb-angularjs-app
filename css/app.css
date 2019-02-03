@@ -21,10 +21,21 @@ input.ng-invalid:focus {
   padding: 15px 15px;
 }
 
+.edit-group-form{
+
+		margin-bottom:500px;
+	
+}
+
 input[type="number"].form-control{
   width: 5em;
 }
 
+
+.uib-timepicker .btn-link{
+		font-size:28px;
+		color: white;
+}
 
 /* .form-group:first-child label { */
 	/* width: 100px; */
